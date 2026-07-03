@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEGACY ARCHIVE SYSTEM - INACTIVE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            background-color: #0f0f0f;
+            color: #b8b8b8;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            font-size: 13px;
+            line-height: 1.6;
+            overflow: hidden;
+        }
+
+        .system-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, #0a0a0a 0%, #0f0f0f 50%, #0d0d0d 100%);
+        }
+
+        /* LOADING STATE */
+        .loading-state {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0f0f0f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 1;
+            transition: opacity 0.6s ease-out;
+        }
+
+        .loading-state.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .loading-text {
+            color: #666666;
+            font-size: 12px;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            text-align: center;
+            line-height: 2;
+            font-family: 'Courier New', monospace;
+        }
+
+        .loading-indicator {
+            width: 200px;
+            height: 2px;
+            background-color: #222222;
+            border-radius: 1px;
+            overflow: hidden;
+        }
+
+        .loading-bar {
+            height: 100%;
+            background-color: #4a4a4a;
+            width: 0%;
+            animation: loading-progress 1.2s ease-in-out infinite;
+        }
+
+        @keyframes loading-progress {
+            0% { width: 0%; }
+            50% { width: 100%; }
+            100% { width: 100%; }
+        }
+
+        /* MAIN CONTENT */
+        .archive-header {
+            padding: 40px 50px;
+            border-bottom: 1px solid #1a1a1a;
+            background-color: rgba(10, 10, 10, 0.7);
+        }
+
+        .system-title {
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: #666666;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .system-name {
+            font-size: 16px;
+            color: #999999;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+
+        .archive-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px 50px;
+            opacity: 0;
+            transition: opacity 0.8s ease-out 0.3s;
+        }
+
+        .archive-content.visible {
+            opacity: 1;
+        }
+
+        .record-section {
+            margin-bottom: 45px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            letter-spacing: 2px;
+            color: #555555;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #1a1a1a;
+            padding-bottom: 8px;
+        }
+
+        .record-entry {
+            margin-bottom: 12px;
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        .entry-label {
+            color: #666666;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .entry-value {
+            color: #a0a0a0;
+            font-size: 12px;
+            line-height: 1.8;
+        }
+
+        .entry-value.degraded {
+            color: #5a5a5a;
+            font-style: italic;
+        }
+
+        .entry-value.status-active {
+            color: #777777;
+        }
+
+        .entry-value.status-corrupted {
+            color: #7a7a7a;
+            text-decoration: underline wavy #3a3a3a;
+        }
+
+        .operation-description {
+            background-color: rgba(20, 20, 20, 0.8);
+            border-left: 2px solid #1a1a1a;
+            padding: 15px 20px;
+            margin: 20px 0;
+            color: #808080;
+            font-size: 12px;
+            line-height: 1.9;
+        }
+
+        .list-item {
+            color: #7a7a7a;
+            font-size: 12px;
+            margin-left: 20px;
+            margin-bottom: 8px;
+            line-height: 1.7;
+        }
+
+        .list-item:before {
+            content: "−";
+            margin-right: 10px;
+            color: #555555;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: #1a1a1a;
+            margin: 30px 0;
+        }
+
+        .system-status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .status-item {
+            background-color: rgba(15, 15, 15, 0.9);
+            padding: 12px 15px;
+            border: 1px solid #1a1a1a;
+        }
+
+        .status-label {
+            font-size: 11px;
+            letter-spacing: 0.5px;
+            color: #555555;
+            margin-bottom: 5px;
+        }
+
+        .status-value {
+            font-size: 12px;
+            color: #7a7a7a;
+        }
+
+        /* SCROLLBAR */
+        .archive-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .archive-content::-webkit-scrollbar-track {
+            background: #0a0a0a;
+        }
+
+        .archive-content::-webkit-scrollbar-thumb {
+            background: #2a2a2a;
+            border-radius: 4px;
+        }
+
+        .archive-content::-webkit-scrollbar-thumb:hover {
+            background: #3a3a3a;
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .archive-header {
+                padding: 25px 20px;
+            }
+
+            .archive-content {
+                padding: 25px 20px;
+            }
+
+            .record-entry {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+
+            .entry-label {
+                color: #555555;
+                font-weight: 600;
+            }
+
+            .system-status-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="system-container">
+        <!-- LOADING STATE -->
+        <div class="loading-state" id="loadingState">
+            <div class="loading-text">
+                INITIALIZING LEGACY DATABASE CONNECTION...<br>
+                VERIFYING ARCHIVAL INTEGRITY...<br>
+                LOADING HISTORICAL USER RECORD...
+            </div>
+            <div class="loading-indicator">
+                <div class="loading-bar"></div>
+            </div>
+        </div>
+
+        <!-- HEADER -->
+        <div class="archive-header">
+            <div class="system-title">LEGACY ARCHIVE SYSTEM</div>
+            <div class="system-name">INTERNAL DATABASE TERMINAL - INACTIVE NODE</div>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="archive-content" id="archiveContent">
+            <!-- SYSTEM RECORD -->
+            <div class="record-section">
+                <div class="section-title">ARCHIVE SYSTEM RECORD</div>
+                <div class="record-entry">
+                    <div class="entry-label">LAST SYSTEM ENTRY</div>
+                    <div class="entry-value">03.04.2015</div>
+                </div>
+                <div class="record-entry">
+                    <div class="entry-label">LAST ACCESS TIME</div>
+                    <div class="entry-value">03.04.2015</div>
+                </div>
+                <div class="record-entry">
+                    <div class="entry-label">SYSTEM OWNER</div>
+                    <div class="entry-value">Davronov Umid</div>
+                </div>
+                <div class="record-entry">
+                    <div class="entry-label">TELEGRAM IDENTIFIER</div>
+                    <div class="entry-value">@Muntozo</div>
+                </div>
+                <div class="record-entry">
+                    <div class="entry-label">SESSION ID</div>
+                    <div class="entry-value">03091780309197110102017</div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- OPERATION HISTORY -->
+            <div class="record-section">
+                <div class="section-title">SYSTEM OPERATION HISTORY</div>
+                <div class="operation-description">
+                    Before termination, this system was actively involved in verified operational activity.
+                </div>
+                <div class="record-entry">
+                    <div class="entry-label">PRIMARY FUNCTION</div>
+                    <div class="entry-value">
+                        Facilitating structured intermediary operations in the exchange of rare historical artifacts, including:
+                        <div class="list-item">archaeological objects</div>
+                        <div class="list-item">rare ancient biological remains</div>
+                        <div class="list-item">preserved fossilized specimens of extinct organisms</div>
+                    </div>
+                </div>
+                <div class="record-entry" style="margin-top: 15px;">
+                    <div class="entry-label">OPERATIONAL MODE</div>
+                    <div class="entry-value">
+                        The system acted as a controlled intermediary node ensuring secure and structured transfer between verified participants.
+                    </div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- SYSTEM STATUS BEFORE SHUTDOWN -->
+            <div class="record-section">
+                <div class="section-title">SYSTEM STATUS BEFORE SHUTDOWN</div>
+                <div class="record-entry">
+                    <div class="entry-label">OPERATIONAL STATE</div>
+                    <div class="entry-value status-active">ACTIVE / STABLE OPERATIONAL NODE</div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- TERMINATION EVENT -->
+            <div class="record-section">
+                <div class="section-title">SYSTEM TERMINATION EVENT</div>
+                <div class="record-entry">
+                    <div class="entry-label">SHUTDOWN REASON</div>
+                    <div class="entry-value status-corrupted">UNKNOWN ORGANIZED ATTACK − MULTIPLE UNIDENTIFIED SOURCES TARGETED THE INFRASTRUCTURE</div>
+                </div>
+                <div class="record-entry" style="margin-top: 15px;">
+                    <div class="entry-label">INCIDENT DETAILS</div>
+                    <div class="entry-value">
+                        The system experienced coordinated external intrusion attempts leading to irreversible structural corruption of the database environment. All operations were suspended immediately following the breach.
+                    </div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- SYSTEM PROFILE STATE -->
+            <div class="record-section">
+                <div class="section-title">SYSTEM PROFILE STATE</div>
+                <div class="record-entry">
+                    <div class="entry-label">PROFILE RECORD</div>
+                    <div class="entry-value degraded">FULLY CORRUPTED</div>
+                </div>
+                <div class="record-entry">
+                    <div class="entry-label">IDENTITY STATUS</div>
+                    <div class="entry-value">ARCHIVED NODE (DEACTIVATED SYSTEM ENTRY)</div>
+                </div>
+                <div class="record-entry">
+                    <div class="entry-label">CURRENT CLASSIFICATION</div>
+                    <div class="entry-value">LEGACY USER ENTITY</div>
+                </div>
+                <div class="record-entry">
+                    <div class="entry-label">DATABASE TYPE</div>
+                    <div class="entry-value">DISCONTINUED CORPORATE INFRASTRUCTURE</div>
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- SYSTEM NOTES -->
+            <div class="record-section">
+                <div class="section-title">SYSTEM NOTES</div>
+                <div class="operation-description">
+                    No official recovery process was initiated after shutdown. All backup nodes were either destroyed or became inaccessible.
+                </div>
+            </div>
+
+            <div class="divider"></div>
+
+            <!-- FINAL STATUS -->
+            <div class="record-section">
+                <div class="section-title">CURRENT SYSTEM STATUS</div>
+                <div class="system-status-grid">
+                    <div class="status-item">
+                        <div class="status-label">ACCESS LEVEL</div>
+                        <div class="status-value">RESTRICTED</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">SYSTEM STATE</div>
+                        <div class="status-value">ARCHIVED / INACTIVE</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">DATA INTEGRITY</div>
+                        <div class="status-value">DEGRADED</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">MONITORING</div>
+                        <div class="status-value">DISCONNECTED</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">LOGGING</div>
+                        <div class="status-value">TERMINATED</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-label">RECOVERY PROTOCOL</div>
+                        <div class="status-value">UNAVAILABLE</div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="height: 60px;"></div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const loadingState = document.getElementById('loadingState');
+            const archiveContent = document.getElementById('archiveContent');
+            
+            // Random delay between 0.5 - 1.5 seconds
+            const delay = 500 + Math.random() * 1000;
+            
+            setTimeout(function() {
+                loadingState.classList.add('hidden');
+                archiveContent.classList.add('visible');
+            }, delay);
+        });
+    </script>
+</body>
+</html>
